@@ -6,3 +6,5 @@ MPK_LINE_URL = 'http://www.mpk.lodz.pl/rozklady/trasa.jsp?lineId={lineId}'
 UPDATE_INTERVAL = 120
 LANG = 'pl-PL'
 LINEID_REGEX = 'lineId=(\d+)'
+STOP_REGEX = 'tabliczka.jsp\?direction=(?P<direction>\d{1})&lineId=(?:\d+)&timetableId=(?P<timetableId>\d+)&stopNumber=(?P<stopNumber>\d+)'
+DB_CONFIG = ''

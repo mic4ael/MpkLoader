@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from bs4 import BeautifulSoup as BS
-from .config import LANG, LINEID_REGEX
+from .config import LANG, LINEID_REGEX, STOP_REGEX
 
 import requests
 import re
@@ -54,9 +54,26 @@ class MpkLinesExtractor(Extractor):
 class MpkStopsExtractor(Extractor):
 
 	def extract(self):
+		stops = {}
 		for t in self._html_tree.find_all('td', class_='transfers'):
 			t.extract()
 
 		tds = self._html_tree.find('div', id='dRoute').find_all('td', class_='version')
 		for td in tds:
 			trs = td.find_all('tr')
+			for tr in trs:
+				links = tr.find_all('a')
+				for link in links:
+					result = re.search(STOP_REGEX, link['href'])
+					direction, timetable_id, stop_number = result.groups()
+					stop_name = link.text.strip()
+					if direction not in stops:
+						stops[direction] = []
+
+					stops[direction].append({
+						'timetable_id': timetable_id,
+						'stop_name': stop_name,
+						'stop_number': stop_number
+					})
+
+		return stops
