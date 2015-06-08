@@ -2,6 +2,7 @@
 
 from .daemon import MpkLoader
 
+
 def run():
-	instance = MpkLoader()
-	instance.run()
+    instance = MpkLoader()
+    instance.run()

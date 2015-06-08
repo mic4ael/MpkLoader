@@ -16,28 +16,28 @@ ModelBase = declarative_base()
 
 
 class MpkLineModel(ModelBase):
-	__tablename__ = 'mpk_lines'
+    __tablename__ = 'mpk_lines'
 
-	line_id = Column('line_id', INTEGER(), primary_key=True, nullable=False)
-	line = Column('line', VARCHAR(length=10), nullable=False)
-	type = Column('type', VARCHAR(length=20), nullable=False)
+    line_id = Column(BIGINT(), primary_key=True, nullable=False)
+    line = Column(VARCHAR(length=10), nullable=False)
+    type = Column(VARCHAR(length=20), nullable=False)
 
 
 class MpkStopModel(ModelBase):
-	__tablename__ = 'mpk_stops'
+    __tablename__ = 'mpk_stops'
 
-	id = Column(BIGINT(), primary_key=True, nullable=False)
-	service_line_id = Column(INTEGER(), ForeignKey(MpkLineModel.line_id), nullable=False)
-	stop_number = Column('stop_number', INTEGER(), nullable=False)
-	stop_street = Column('stop_street', VARCHAR(length=200), nullable=False)
-	timetable_id = Column('timetable_id', INTEGER(), nullable=False)
-	direction = Column('direction', SMALLINT(), nullable=False)
+    id = Column(BIGINT(), primary_key=True, nullable=False)
+    service_line_id = Column(INTEGER(), ForeignKey(MpkLineModel.line_id), nullable=False)
+    stop_number = Column(INTEGER(), nullable=False)
+    stop_street = Column(VARCHAR(length=200), nullable=False)
+    timetable_id = Column(INTEGER(), nullable=False)
+    direction = Column(SMALLINT(), nullable=False)
 
 
 class MpkStopsConnection(ModelBase):
-	__tablename__ = 'mpk_stops_connections'
+    __tablename__ = 'mpk_stops_connections'
 
-	id = Column(INTEGER(), primary_key=True, nullable=False)
-	src_stop = Column(INTEGER(), ForeignKey(MpkStopModel.id), nullable=False)
-	dst_stop = Column(INTEGER(), ForeignKey(MpkStopModel.id), nullable=False)
-	time = Column(INTEGER(), nullable=False, default=0)
+    id = Column(BIGINT(), primary_key=True, nullable=False)
+    src_stop = Column(BIGINT(), ForeignKey(MpkStopModel.id), nullable=False)
+    dst_stop = Column(BIGINT(), ForeignKey(MpkStopModel.id), nullable=False)
+    time = Column(INTEGER(), nullable=False, default=0)
