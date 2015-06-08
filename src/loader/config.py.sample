@@ -7,4 +7,4 @@ UPDATE_INTERVAL = 120
 LANG = 'pl-PL'
 LINEID_REGEX = 'lineId=(\d+)'
 STOP_REGEX = 'tabliczka.jsp\?direction=(?P<direction>\d{1})&lineId=(?:\d+)&timetableId=(?P<timetable_id>\d+)&stopNumber=(?P<stop_number>\d+)'
-DB_CONFIG = {}
+DB_CONFIG = dict()

@@ -3,41 +3,41 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.sql.sqltypes import SMALLINT, INTEGER, VARCHAR
+from sqlalchemy.sql.sqltypes import SMALLINT, INTEGER, VARCHAR, SMALLINT, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 
 from .config import DB_CONFIG
 
-db_engine = create_engine('sqlite:///loader.db')
-Session = sessionmaker(bind=db_engine)
-session = Session(autocommit=False)
+_db_engine = create_engine('sqlite:///loader.db')
+_Session = sessionmaker(bind=_db_engine)
+session = _Session(autocommit=False)
 
 ModelBase = declarative_base()
 
 
-class BusLine(ModelBase):
-	__tablename__ = 'bus_lines'
+class MpkLineModel(ModelBase):
+	__tablename__ = 'mpk_lines'
 
 	line_id = Column('line_id', INTEGER(), primary_key=True, nullable=False)
 	line = Column('line', VARCHAR(length=10), nullable=False)
 	type = Column('type', VARCHAR(length=20), nullable=False)
 
 
-class BusStop(ModelBase):
-	__tablename__ = 'bus_stops'
+class MpkStopModel(ModelBase):
+	__tablename__ = 'mpk_stops'
 
-	id = Column(INTEGER(), primary_key=True, nullable=False)
+	id = Column(BIGINT(), primary_key=True, nullable=False)
+	service_line_id = Column(INTEGER(), ForeignKey(MpkLineModel.line_id), nullable=False)
 	stop_number = Column('stop_number', INTEGER(), nullable=False)
-	line_id = Column('line_id', ForeignKey(BusLine.line_id))
-	stop_name = Column('stop_name', VARCHAR(length=200), nullable=False)
-	timetable_id = Column('timetable_id', INTEGER())
-	direction = Column('direction', SMALLINT())
+	stop_street = Column('stop_street', VARCHAR(length=200), nullable=False)
+	timetable_id = Column('timetable_id', INTEGER(), nullable=False)
+	direction = Column('direction', SMALLINT(), nullable=False)
 
 
-class BusStopsConnection(ModelBase):
-	__tablename__ = 'bus_stops_connections'
+class MpkStopsConnection(ModelBase):
+	__tablename__ = 'mpk_stops_connections'
 
 	id = Column(INTEGER(), primary_key=True, nullable=False)
-	src_bus_stop = Column(INTEGER(), ForeignKey(BusStop.stop_number), nullable=False)
-	dst_bus_stop = Column(INTEGER(), ForeignKey(BusStop.stop_number), nullable=False)
+	src_stop = Column(INTEGER(), ForeignKey(MpkStopModel.id), nullable=False)
+	dst_stop = Column(INTEGER(), ForeignKey(MpkStopModel.id), nullable=False)
 	time = Column(INTEGER(), nullable=False, default=0)

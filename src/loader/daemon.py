@@ -2,7 +2,7 @@
 
 from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor
 from .config import MPK_URL, MPK_LINE_URL
-from .db import session, BusLine, BusStop
+from .db import session, MpkLineModel, MpkStopModel
 from .log import logger
 
 from bs4 import BeautifulSoup as BS
@@ -22,12 +22,12 @@ class MpkLoader(object):
 
 	def _store_lines_to_db(self):
 		for mpk_line, details in self._mpk_lines.iteritems():
-			if session.query(BusLine).get(mpk_line) is not None:
-				logger.debug('Busline with id %r is already in the database', mpk_line)
+			if session.query(MpkLineModel).get(mpk_line) is not None:
+				logger.debug('MPK service %s row already exists', details['line'])
 				continue
 
-			logger.debug('MPK Line: %r, Details: %s', mpk_line, details)
-			obj = BusLine(
+			logger.debug('MPK service: %s, Type: %s', details['line'], details['type'])
+			obj = MpkLineModel(
 				line=details['line'],
 				type=details['type'],
 				line_id=mpk_line
@@ -40,25 +40,27 @@ class MpkLoader(object):
 
 	def _get_all_stops(self):
 		stops = {}
-		for mpk_line in self._mpk_lines:
+		for mpk_line, details in self._mpk_lines.iteritems():
 			html = self._downloader.download_html(MPK_LINE_URL.format(lineId=mpk_line))
 			extractor = MpkStopsExtractor(html)
 			stops[mpk_line] = extractor.extract()
+			logger.debug('MPK Stops extracted for service %s', details['line'])
 
 		return stops
 
 	def _store_stops_to_db(self):
 		for mpk_line, details in self._bus_stops.iteritems():
 			for direction, stops_data in details.iteritems():
-				for bus_data in stops_data:
-					logger.debug('Adding new bus stop for line %s, details %s', mpk_line, bus_data)
+				for stop_data in stops_data:
 
-					obj = BusStop(
+					logger.debug('Adding new bus stop with details %s', stop_data)
+
+					obj = MpkStopModel(
+						timetable_id=stop_data['timetable_id'],
+						stop_street=stop_data['stop_street'],
+						stop_number=stop_data['stop_number'],
 						direction=direction,
-						line_id=mpk_line,
-						timetable_id=bus_data['timetable_id'],
-						stop_name=bus_data['stop_name'],
-						stop_number=bus_data['stop_number']
+						service_line_id=mpk_line
 					)
 
 					session.add(obj)

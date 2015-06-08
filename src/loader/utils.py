@@ -8,7 +8,8 @@ import re
 
 def get(url):
 	headers = {
-		'Accept-Language': LANG
+		'Accept-Language': LANG,
+		'Connection': 'close'
 	}
 
 	return requests.get(url, headers=headers)
@@ -66,13 +67,13 @@ class MpkStopsExtractor(Extractor):
 				for link in links:
 					result = re.search(STOP_REGEX, link['href'])
 					direction, timetable_id, stop_number = result.groups()
-					stop_name = link.text.strip()
+					stop_street = link.text.strip()
 					if direction not in stops:
 						stops[direction] = []
 
 					stops[direction].append({
 						'timetable_id': timetable_id,
-						'stop_name': stop_name,
+						'stop_street': stop_street,
 						'stop_number': stop_number
 					})
 
