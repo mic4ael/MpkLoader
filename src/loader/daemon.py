@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor
-from .config import MPK_URL, MPK_LINE_URL
-from .db import session, MpkLineModel, MpkStopModel
+from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor, MpkTimetableExtractor
+from .config import MPK_URL, MPK_LINE_URL, MPK_TIMETABLE_URL
+from .db import session, MpkLineModel, MpkStopModel, MpkStopsConnection
 from .log import logger
 
 
@@ -49,6 +49,10 @@ class MpkLoader(object):
     def _store_stops_to_db(self):
         for mpk_line, details in self._bus_stops.iteritems():
             for direction, stops_data in details.iteritems():
+                start_point = stops_data[0]
+                start_point['direction'] = direction
+                start_point['service_line_id'] = mpk_line
+                self._load_mpk_connection(stops_data[0])
                 for stop_data in stops_data:
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
@@ -62,7 +66,6 @@ class MpkLoader(object):
                         timetable_id=stop_data['timetable_id'],
                         stop_street=stop_data['stop_street'],
                         stop_number=stop_data['stop_number'],
-                        direction=direction,
                         service_line_id=mpk_line
                     )
 
@@ -73,14 +76,43 @@ class MpkLoader(object):
     def _mpk_stop_already_exists(self, mpk_stop):
         query = session.query(MpkStopModel).filter_by(
             stop_number=mpk_stop['stop_number'],
-            direction=mpk_stop['direction'],
             service_line_id=mpk_stop['service_line_id']
         )
 
         return session.query(query.exists()).scalar()
 
-    def _load_mpk_connections(self):
-        pass
+    def _load_mpk_connection(self, mpk_stop):
+        url = MPK_TIMETABLE_URL.format(
+            direction=mpk_stop['direction'],
+            line_id=mpk_stop['service_line_id'],
+            timetable_id=mpk_stop['timetable_id'],
+            stop_number=mpk_stop['stop_number']
+        )
+        html = self._downloader.download_html(url)
+        extractor = MpkTimetableExtractor(html)
+        self._save_connections_to_db(extractor.extract())
+
+    def _save_connections_to_db(self, node):
+        iter = node
+        while iter is not None and iter.has_next():
+            next = iter.next
+            row = session.query(MpkStopsConnection).filter_by(
+                src_stop=iter._stop_number,
+                dst_stop=next._stop_number
+            ).first()
+
+            if row is not None:
+                row.time = next.time
+            else:
+                row = MpkStopsConnection(
+                    src_stop=iter._stop_number,
+                    dst_stop=next._stop_number,
+                    time=next.time
+                )
+
+            session.add(row)
+            session.commit()
+            iter = next
 
     def run(self):
         logger.debug('<<<< Starting MPKLoader >>>>')
@@ -88,4 +120,3 @@ class MpkLoader(object):
         self._store_lines_to_db()
         self._bus_stops = self._get_all_stops()
         self._store_stops_to_db()
-        self._load_mpk_connections()

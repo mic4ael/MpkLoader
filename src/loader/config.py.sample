@@ -2,9 +2,12 @@
 
 MPK_URL = 'http://www.mpk.lodz.pl/rozklady/linie.jsp'
 MPK_LINE_URL = 'http://www.mpk.lodz.pl/rozklady/trasa.jsp?lineId={lineId}'
+MPK_TIMETABLE_URL = 'http://www.mpk.lodz.pl/rozklady/\
+tabliczka.jsp?direction={direction}&lineId={line_id}&timetableId={timetable_id}&stopNumber={stop_number}'
 
 UPDATE_INTERVAL = 120
 LANG = 'pl-PL'
 LINEID_REGEX = 'lineId=(\d+)'
 STOP_REGEX = 'tabliczka.jsp\?direction=(?P<direction>\d{1})&lineId=(?:\d+)&timetableId=(?P<timetable_id>\d+)&stopNumber=(?P<stop_number>\d+)'
+TIMETABLE_REGEX = 'tabliczka.jsp\?direction=(?:\d{1})&lineId=(?P<line_id>\d+)&timetableId=(?:\d+)&stopNumber=(?P<stop_number>\d+)'
 DB_CONFIG = dict()

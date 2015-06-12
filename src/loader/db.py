@@ -31,7 +31,6 @@ class MpkStopModel(ModelBase):
     stop_number = Column(INTEGER(), nullable=False)
     stop_street = Column(VARCHAR(length=200), nullable=False)
     timetable_id = Column(INTEGER(), nullable=False)
-    direction = Column(SMALLINT(), nullable=False)
 
 
 class MpkStopsConnection(ModelBase):

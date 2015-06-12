@@ -17,7 +17,6 @@ CREATE TABLE mpk_stops
   stop_number INTEGER NOT NULL,
   stop_street TEXT NOT NULL,
   timetable_id INTEGER NOT NULL,
-  direction SMALLINT NOT NULL,
   CONSTRAINT primary_key_mpk_stops PRIMARY KEY (id),
   CONSTRAINT fk_service_line_id FOREIGN KEY(service_line_id)
 	REFERENCES mpk_lines(line_id)
