@@ -107,7 +107,7 @@ class MpkTimetableExtractor(Extractor):
         time_total = 0
         for td in table_data:
             prev_node = self._parse_single_data_row(td, prev_node, time_total)
-            time_total += prev_node._time
+            time_total += prev_node.time_in_minutes
 
         return self._root_node
 
@@ -149,8 +149,12 @@ class Node(object):
         self._mpk_line_id = value
 
     @property
-    def time(self):
+    def time_in_seconds(self):
         return self._time * 60
+
+    @property
+    def time_in_minutes(self):
+        return self._time
 
     @property
     def stop_number(self):

@@ -3,7 +3,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import Column, ForeignKey
-from sqlalchemy.sql.sqltypes import SMALLINT, INTEGER, VARCHAR, SMALLINT, BIGINT
+from sqlalchemy.sql.sqltypes import INTEGER, VARCHAR, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 
 from .config import DB_CONFIG

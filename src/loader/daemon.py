@@ -34,7 +34,6 @@ class MpkLoader(object):
             session.add(obj)
 
         session.commit()
-        logger.debug('Storing to db successfully finished')
 
     def _get_all_stops(self):
         stops = {}
@@ -47,12 +46,13 @@ class MpkLoader(object):
         return stops
 
     def _store_stops_to_db(self):
+        connections = []
         for mpk_line, details in self._bus_stops.iteritems():
             for direction, stops_data in details.iteritems():
                 start_point = stops_data[0]
                 start_point['direction'] = direction
                 start_point['service_line_id'] = mpk_line
-                self._load_mpk_connection(stops_data[0])
+                connections.append(stops_data[0])
                 for stop_data in stops_data:
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
@@ -70,8 +70,11 @@ class MpkLoader(object):
                     )
 
                     session.add(obj)
+                    session.commit()
 
-        session.commit()
+        for conn_data in connections:
+            self._load_mpk_connection(conn_data)
+
 
     def _mpk_stop_already_exists(self, mpk_stop):
         query = session.query(MpkStopModel).filter_by(
@@ -95,6 +98,7 @@ class MpkLoader(object):
     def _save_connections_to_db(self, node):
         curr_node = node
         while curr_node is not None and curr_node.has_next():
+            logger.info('Loading connections for the stop with id: %s', curr_node.stop_number)
             next_node = curr_node.next
             row = session.query(MpkStopsConnection).filter_by(
                 src_stop=curr_node.stop_number,
@@ -102,12 +106,12 @@ class MpkLoader(object):
             ).first()
 
             if row is not None:
-                row.time = next_node.time
+                row.time = next_node.time_in_seconds
             else:
                 row = MpkStopsConnection(
                     src_stop=curr_node.stop_number,
                     dst_stop=next_node.stop_number,
-                    time=next_node.time
+                    time=next_node.time_in_seconds
                 )
 
             session.add(row)
