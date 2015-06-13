@@ -75,7 +75,6 @@ class MpkLoader(object):
         for conn_data in connections:
             self._load_mpk_connection(conn_data)
 
-
     def _mpk_stop_already_exists(self, mpk_stop):
         query = session.query(MpkStopModel).filter_by(
             stop_number=mpk_stop['stop_number'],
@@ -108,9 +107,17 @@ class MpkLoader(object):
             if row is not None:
                 row.time = next_node.time_in_seconds
             else:
+                src_stop = session.query(MpkStopModel).filter_by(
+                    stop_number=curr_node.stop_number,
+                    service_line_id=curr_node.mpk_line_id
+                ).first()
+                dst_stop = session.query(MpkStopModel).filter_by(
+                    stop_number=next_node.stop_number,
+                    service_line_id=next_node.mpk_line_id
+                ).first()
                 row = MpkStopsConnection(
-                    src_stop=curr_node.stop_number,
-                    dst_stop=next_node.stop_number,
+                    src_stop=src_stop.id,
+                    dst_stop=dst_stop.id,
                     time=next_node.time_in_seconds
                 )
 
