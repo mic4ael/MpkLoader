@@ -97,32 +97,35 @@ class MpkLoader(object):
     def _save_connections_to_db(self, node):
         curr_node = node
         while curr_node is not None and curr_node.has_next():
-            logger.info('Loading connections for the stop with id: %s', curr_node.stop_number)
             next_node = curr_node.next
-            row = session.query(MpkStopsConnection).filter_by(
-                src_stop=curr_node.stop_number,
-                dst_stop=next_node.stop_number
+            logger.info('Curr node: %s, next node: %s', curr_node, next_node)
+            src_stop = session.query(MpkStopModel).filter_by(
+                stop_number=curr_node.stop_number,
+                service_line_id=curr_node.mpk_line_id
+            ).first()
+            dst_stop = session.query(MpkStopModel).filter_by(
+                stop_number=next_node.stop_number,
+                service_line_id=next_node.mpk_line_id
             ).first()
 
-            if row is not None:
-                row.time = next_node.time_in_seconds
-            else:
-                src_stop = session.query(MpkStopModel).filter_by(
-                    stop_number=curr_node.stop_number,
-                    service_line_id=curr_node.mpk_line_id
-                ).first()
-                dst_stop = session.query(MpkStopModel).filter_by(
-                    stop_number=next_node.stop_number,
-                    service_line_id=next_node.mpk_line_id
-                ).first()
-                row = MpkStopsConnection(
+            if src_stop is not None and dst_stop is not None:
+                row = session.query(MpkStopsConnection).filter_by(
                     src_stop=src_stop.id,
-                    dst_stop=dst_stop.id,
-                    time=next_node.time_in_seconds
-                )
+                    dst_stop=dst_stop.id
+                ).first()
 
-            session.add(row)
-            session.commit()
+                if row is not None:
+                    row.time = next_node.time_in_seconds
+                else:
+                    row = MpkStopsConnection(
+                        src_stop=src_stop.id,
+                        dst_stop=dst_stop.id,
+                        time=next_node.time_in_seconds
+                    )
+
+                session.add(row)
+                session.commit()
+
             curr_node = next_node
 
     def run(self):
