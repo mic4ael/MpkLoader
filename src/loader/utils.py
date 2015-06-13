@@ -152,6 +152,10 @@ class Node(object):
     def time(self):
         return self._time * 60
 
+    @property
+    def stop_number(self):
+        return self._stop_number
+
     def has_next(self):
         return self._next is not None
 

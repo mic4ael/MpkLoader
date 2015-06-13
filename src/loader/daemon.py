@@ -93,26 +93,26 @@ class MpkLoader(object):
         self._save_connections_to_db(extractor.extract())
 
     def _save_connections_to_db(self, node):
-        iter = node
-        while iter is not None and iter.has_next():
-            next = iter.next
+        curr_node = node
+        while curr_node is not None and curr_node.has_next():
+            next_node = curr_node.next
             row = session.query(MpkStopsConnection).filter_by(
-                src_stop=iter._stop_number,
-                dst_stop=next._stop_number
+                src_stop=curr_node.stop_number,
+                dst_stop=next_node.stop_number
             ).first()
 
             if row is not None:
-                row.time = next.time
+                row.time = next_node.time
             else:
                 row = MpkStopsConnection(
-                    src_stop=iter._stop_number,
-                    dst_stop=next._stop_number,
-                    time=next.time
+                    src_stop=curr_node.stop_number,
+                    dst_stop=next_node.stop_number,
+                    time=next_node.time
                 )
 
             session.add(row)
             session.commit()
-            iter = next
+            curr_node = next_node
 
     def run(self):
         logger.debug('<<<< Starting MPKLoader >>>>')
