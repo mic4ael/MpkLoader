@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 from bs4 import BeautifulSoup as BS
 from .config import LANG, LINEID_REGEX, STOP_REGEX, TIMETABLE_REGEX
 from .log import logger
@@ -69,7 +70,12 @@ class MpkStopsExtractor(Extractor):
                 for link in links:
                     result = re.search(STOP_REGEX, link['href'])
                     direction, timetable_id, stop_number = result.groups()
-                    stop_street = link.text.strip()
+
+                    tmp = tr.find('td')
+                    if tmp:
+                        stop_street = tmp.text.strip() + " - " + link.text.strip()
+                    else:
+                        stop_street = link.text.strip()
 
                     if direction not in stops:
                         stops[direction] = []
@@ -83,7 +89,7 @@ class MpkStopsExtractor(Extractor):
         return stops
 
 
-class MpkTimetableExtractor(Extractor):
+class MpkStopConnectionsExtractor(Extractor):
 
     STYLE_FOR_VISIBLE_DIV = 'visibility: visible'
 
@@ -122,6 +128,33 @@ class MpkTimetableExtractor(Extractor):
 
     def _parse_url_for_data(self, link):
         return re.search(TIMETABLE_REGEX, link).groups()
+
+
+class MpkTimetablesExtractor(Extractor):
+
+    def extract(self):
+        day_types = self._html_tree.find_all('div', class_='dayType')
+        day_types_dict = self._get_day_types()
+        result = {}
+        for day_type in day_types:
+            id = day_types_dict[int(day_type['id'][-2:])]
+            timetable_trs = day_type.find('div', class_='tableDayType').find_all('tr')
+            for tr in timetable_trs:
+                hour = int(tr.find('th').text.strip())
+                minutes = [re.sub(r'\D*', '', minute.text.strip()) for minute in tr.find_all('a', class_='minute')]
+                if id not in result:
+                    result[id] = {hour: minutes}
+                else:
+                    result[id].update({hour: minutes})
+
+        return result
+
+    def _get_day_types(self):
+        day_types = self._html_tree.find('div', id='dDayTypeNames').find_all('a')
+        result = {}
+        for item in day_types:
+            result[int(item['id'][-2:])] = item.text.strip()
+        return result
 
 
 class Node(object):

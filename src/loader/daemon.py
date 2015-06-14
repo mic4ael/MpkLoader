@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor, MpkTimetableExtractor
+import json
+
+from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor, MpkStopConnectionsExtractor, MpkTimetablesExtractor
 from .config import MPK_URL, MPK_LINE_URL, MPK_TIMETABLE_URL
-from .db import session, MpkLineModel, MpkStopModel, MpkStopsConnection
+from .db import session, MpkLineModel, MpkStopModel, MpkStopsConnection, MpkTimetables
 from .log import logger
 
 
@@ -66,7 +68,8 @@ class MpkLoader(object):
                         timetable_id=stop_data['timetable_id'],
                         stop_street=stop_data['stop_street'],
                         stop_number=stop_data['stop_number'],
-                        service_line_id=mpk_line
+                        service_line_id=mpk_line,
+                        direction=stop_data['direction']
                     )
 
                     session.add(obj)
@@ -78,7 +81,8 @@ class MpkLoader(object):
     def _mpk_stop_already_exists(self, mpk_stop):
         query = session.query(MpkStopModel).filter_by(
             stop_number=mpk_stop['stop_number'],
-            service_line_id=mpk_stop['service_line_id']
+            service_line_id=mpk_stop['service_line_id'],
+            direction=mpk_stop['direction']
         )
 
         return session.query(query.exists()).scalar()
@@ -91,8 +95,10 @@ class MpkLoader(object):
             stop_number=mpk_stop['stop_number']
         )
         html = self._downloader.download_html(url)
-        extractor = MpkTimetableExtractor(html)
+        extractor = MpkStopConnectionsExtractor(html)
         self._save_connections_to_db(extractor.extract())
+        extractor = MpkTimetablesExtractor(html)
+        self._save_timetables_to_db(extractor.extract(), mpk_stop)
 
     def _save_connections_to_db(self, node):
         curr_node = node
@@ -127,6 +133,35 @@ class MpkLoader(object):
                 session.commit()
 
             curr_node = next_node
+
+    def _save_timetables_to_db(self, data, mpk_stop):
+        stop_row = session.query(MpkStopModel).filter_by(
+            stop_number=mpk_stop['stop_number'],
+            service_line_id=mpk_stop['service_line_id']
+        ).first()
+        for day_type, entry in data.iteritems():
+            row_from_db = session.query(MpkTimetables).filter_by(
+                timetable_id=mpk_stop['timetable_id'],
+                service_line_id=mpk_stop['service_line_id'],
+                stop_id=stop_row.id,
+                day_type=day_type
+            ).first()
+
+            if row_from_db:
+                row_from_db.timetable = json.dumps(entry)
+                session.add(row_from_db)
+            else:
+                row = MpkTimetables(
+                    timetable_id=mpk_stop['timetable_id'],
+                    service_line_id=mpk_stop['service_line_id'],
+                    stop_id=stop_row.id,
+                    day_type=day_type,
+                    timetable=json.dumps(entry),
+                )
+
+                session.add(row)
+
+        session.commit()
 
     def run(self):
         logger.debug('<<<< Starting MPKLoader >>>>')

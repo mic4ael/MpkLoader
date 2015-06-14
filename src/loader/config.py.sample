@@ -10,4 +10,10 @@ LANG = 'pl-PL'
 LINEID_REGEX = 'lineId=(\d+)'
 STOP_REGEX = 'tabliczka.jsp\?direction=(?P<direction>\d{1})&lineId=(?:\d+)&timetableId=(?P<timetable_id>\d+)&stopNumber=(?P<stop_number>\d+)'
 TIMETABLE_REGEX = 'tabliczka.jsp\?direction=(?:\d{1})&lineId=(?P<line_id>\d+)&timetableId=(?:\d+)&stopNumber=(?P<stop_number>\d+)'
-DB_CONFIG = dict()
+DB_CONFIG = dict(
+	username='',
+	password='',
+	host='',
+	port=5432,
+	database=''
+)
