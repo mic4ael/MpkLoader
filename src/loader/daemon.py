@@ -58,6 +58,7 @@ class MpkLoader(object):
                 for stop_data in stops_data:
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
+                    html = self._get_stop_html(stop_data)
 
                     if self._mpk_stop_already_exists(stop_data):
                         continue
@@ -74,9 +75,19 @@ class MpkLoader(object):
 
                     session.add(obj)
                     session.commit()
+                    self._load_and_save_stop_timetable(html, stop_data)
 
         for conn_data in starting_stops:
-            self._load_mpk_connection(conn_data)
+            self._load_mpk_connection(html, conn_data)
+
+    def _get_stop_html(self, mpk_stop):
+        url = MPK_TIMETABLE_URL.format(
+            direction=mpk_stop['direction'],
+            line_id=mpk_stop['service_line_id'],
+            timetable_id=mpk_stop['timetable_id'],
+            stop_number=mpk_stop['stop_number']
+        )
+        return self._downloader.download_html(url)
 
     def _mpk_stop_already_exists(self, mpk_stop):
         query = session.query(MpkStopModel).filter_by(
@@ -87,18 +98,13 @@ class MpkLoader(object):
 
         return session.query(query.exists()).scalar()
 
-    def _load_mpk_connection(self, mpk_stop):
-        url = MPK_TIMETABLE_URL.format(
-            direction=mpk_stop['direction'],
-            line_id=mpk_stop['service_line_id'],
-            timetable_id=mpk_stop['timetable_id'],
-            stop_number=mpk_stop['stop_number']
-        )
-        html = self._downloader.download_html(url)
-        extractor = MpkStopConnectionsExtractor(html)
-        self._save_connections_to_db(extractor.extract())
+    def _load_and_save_stop_timetable(self, html, mpk_stop):
         extractor = MpkTimetablesExtractor(html)
         self._save_timetables_to_db(extractor.extract(), mpk_stop)
+
+    def _load_mpk_connection(self, html, mpk_stop):
+        extractor = MpkStopConnectionsExtractor(html)
+        self._save_connections_to_db(extractor.extract())
 
     def _save_connections_to_db(self, node):
         curr_node = node
@@ -135,6 +141,7 @@ class MpkLoader(object):
             curr_node = next_node
 
     def _save_timetables_to_db(self, data, mpk_stop):
+        logger.debug('Saving timetable for %r', mpk_stop['stop_number'])
         stop_row = session.query(MpkStopModel).filter_by(
             stop_number=mpk_stop['stop_number'],
             service_line_id=mpk_stop['service_line_id']
