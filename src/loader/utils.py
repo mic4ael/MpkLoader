@@ -73,7 +73,10 @@ class MpkStopsExtractor(Extractor):
 
                     tmp = tr.find('td')
                     if tmp:
-                        stop_street = tmp.text.strip() + " - " + link.text.strip()
+                        if tmp.text.strip():
+                            stop_street = tmp.text.strip() + " - " + link.text.strip()
+                        else:
+                            stop_street = link.text.strip()
                     else:
                         stop_street = link.text.strip()
 
