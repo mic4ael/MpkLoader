@@ -48,13 +48,13 @@ class MpkLoader(object):
         return stops
 
     def _store_stops_to_db(self):
-        connections = []
+        starting_stops = []
         for mpk_line, details in self._bus_stops.iteritems():
             for direction, stops_data in details.iteritems():
                 start_point = stops_data[0]
                 start_point['direction'] = direction
                 start_point['service_line_id'] = mpk_line
-                connections.append(stops_data[0])
+                starting_stops.append(stops_data[0])
                 for stop_data in stops_data:
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
@@ -75,7 +75,7 @@ class MpkLoader(object):
                     session.add(obj)
                     session.commit()
 
-        for conn_data in connections:
+        for conn_data in starting_stops:
             self._load_mpk_connection(conn_data)
 
     def _mpk_stop_already_exists(self, mpk_stop):
