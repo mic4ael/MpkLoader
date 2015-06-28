@@ -160,8 +160,7 @@ class MpkLoader(object):
                 )
 
                 session.add(row)
-
-        session.commit()
+            session.commit()
 
     def run(self):
         logger.debug('<<<< Starting MPKLoader >>>>')
