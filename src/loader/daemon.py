@@ -146,6 +146,7 @@ class MpkLoader(object):
             stop_number=mpk_stop['stop_number'],
             service_line_id=mpk_stop['service_line_id']
         ).first()
+        logger.debug('Found Stop: %r', stop_row)
         for day_type, entry in data.iteritems():
             row_from_db = session.query(MpkTimetables).filter_by(
                 timetable_id=mpk_stop['timetable_id'],
@@ -154,6 +155,7 @@ class MpkLoader(object):
                 day_type=day_type
             ).first()
 
+            logger.debug('Row from db: %r', row_from_db)
             if row_from_db:
                 row_from_db.timetable = json.dumps(entry)
                 session.add(row_from_db)
