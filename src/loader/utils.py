@@ -9,16 +9,17 @@ import requests
 import re
 
 
-def get(url):
-    headers = {
-        'Accept-Language': LANG,
-        'Connection': 'close'
-    }
-
-    return requests.get(url, headers=headers)
-
-
 class HtmlDownloader(object):
+
+    session = requests.Session()
+
+    @classmethod
+    def get(cls, url):
+        headers = {
+            'Accept-Language': LANG
+        }
+
+        return cls.session.get(url, headers=headers)
 
     @classmethod
     def download_html(cls, url):
@@ -26,7 +27,9 @@ class HtmlDownloader(object):
             html = re.sub(' {2,}', '', html)
             return html
 
-        return prepare_html(get(url).text)
+        ret_value = prepare_html(cls.get(url).text)
+        logger.debug('Downloading finished')
+        return ret_value
 
 
 class Extractor(object):
