@@ -63,12 +63,12 @@ class MpkLoader(object):
                 for stop_data in stops_data:
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
-                    html = self._get_stop_html(stop_data)
 
                     if self._mpk_stop_already_exists(stop_data):
                         logger.debug('Stop already exists')
                         continue
 
+                    html = self._get_stop_html(stop_data)
                     logger.debug('Adding new bus stop with details %s', stop_data)
 
                     obj = MpkStopModel(
