@@ -2,11 +2,11 @@
 
 import json
 
-from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor, MpkStopConnectionsExtractor, MpkTimetablesExtractor
+from .utils import HtmlDownloader, MpkLinesExtractor, MpkStopsExtractor, MpkStopConnectionsExtractor,\
+                    MpkTimetablesExtractor
 from .config import MPK_URL, MPK_LINE_URL, MPK_TIMETABLE_URL
 from .db import session, MpkLineModel, MpkStopModel, MpkStopsConnection, MpkTimetables
 from .log import logger
-
 
 
 class MpkLoader(object):
