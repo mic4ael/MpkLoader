@@ -49,6 +49,7 @@ class MpkLoader(object):
                 logger.debug('MPK Stops extracted for %s', details['line'])
             except Exception, e:
                 logger.error('Exception occurred while getting a stop html %r', e)
+            break
 
         return stops
 
@@ -132,12 +133,14 @@ class MpkLoader(object):
                 stop_number=next_node.stop_number,
                 service_line_id=next_node.mpk_line_id
             ).first()
+            session.commit()
 
             if src_stop is not None and dst_stop is not None:
                 row = session.query(MpkStopsConnection).filter_by(
                     src_stop=src_stop.id,
                     dst_stop=dst_stop.id
                 ).first()
+                session.commit()
 
                 if row is not None:
                     row.time = next_node.time_in_seconds
@@ -148,8 +151,11 @@ class MpkLoader(object):
                         time=next_node.time_in_seconds
                     )
 
+                logger.debug('Stop Row: %r', row)
                 session.add(row)
                 session.commit()
+            else:
+                logger.debug('Src stop and dst stop are None')
 
             curr_node = next_node
 
