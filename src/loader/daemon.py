@@ -49,7 +49,6 @@ class MpkLoader(object):
                 logger.debug('MPK Stops extracted for %s', details['line'])
             except Exception, e:
                 logger.error('Exception occurred while getting a stop html %r', e)
-            break
 
         return stops
 
@@ -60,17 +59,19 @@ class MpkLoader(object):
                 start_point = stops_data[0]
                 start_point['direction'] = direction
                 start_point['service_line_id'] = mpk_line
-                starting_stops.append(stops_data[0])
-                for stop_data in stops_data:
+                for index, stop_data in enumerate(stops_data):
                     stop_data['service_line_id'] = mpk_line
                     stop_data['direction'] = direction
 
-                    if self._mpk_stop_already_exists(stop_data):
-                        logger.debug('Stop already exists')
-                        continue
-
                     try:
                         html = self._get_stop_html(stop_data)
+                        if index == 0:
+                            starting_stops.append(html)
+
+                        if self._mpk_stop_already_exists(stop_data):
+                            logger.debug('Stop already exists')
+                            continue
+
                         logger.debug('Adding new bus stop with details %s', stop_data)
 
                         obj = MpkStopModel(
@@ -88,8 +89,8 @@ class MpkLoader(object):
                     except Exception, e:
                         logger.error('Error occurred %r', e)
 
-        for conn_data in starting_stops:
-            self._load_mpk_connection(html, conn_data)
+        for conn_data_html in starting_stops:
+            self._load_mpk_connection(conn_data_html)
 
     def _get_stop_html(self, mpk_stop):
         url = MPK_TIMETABLE_URL.format(
@@ -115,13 +116,14 @@ class MpkLoader(object):
         self._save_timetables_to_db(extractor.extract(), mpk_stop)
         logger.debug('Saving timetables finished')
 
-    def _load_mpk_connection(self, html, mpk_stop):
+    def _load_mpk_connection(self, html):
         extractor = MpkStopConnectionsExtractor(html)
         self._save_connections_to_db(extractor.extract())
         logger.debug('Loading mpk connections finished')
 
     def _save_connections_to_db(self, node):
         curr_node = node
+        logger.debug('Saving connections')
         while curr_node is not None and curr_node.has_next():
             next_node = curr_node.next
             logger.info('Curr node: %s, next node: %s', curr_node, next_node)
