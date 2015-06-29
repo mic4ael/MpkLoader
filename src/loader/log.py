@@ -14,3 +14,10 @@ _handler.setFormatter(logging.Formatter(
 ))
 
 logger.addHandler(_handler)
+
+_console_handler = logging.StreamHandler()
+_console_handler.setFormatter(logging.Formatter(
+	'%(asctime)s [%(name)s][%(levelname)s] %(message)s'
+))
+
+logger.addHandler(_console_handler)

@@ -47,8 +47,8 @@ class MpkLoader(object):
                 extractor = MpkStopsExtractor(html)
                 stops[mpk_line] = extractor.extract()
                 logger.debug('MPK Stops extracted for %s', details['line'])
-            except:
-                logger.debug('Exception occurred')
+            except Exception, e:
+                logger.error('Exception occurred while getting a stop html %r', e)
 
         return stops
 
@@ -68,21 +68,24 @@ class MpkLoader(object):
                         logger.debug('Stop already exists')
                         continue
 
-                    html = self._get_stop_html(stop_data)
-                    logger.debug('Adding new bus stop with details %s', stop_data)
+                    try:
+                        html = self._get_stop_html(stop_data)
+                        logger.debug('Adding new bus stop with details %s', stop_data)
 
-                    obj = MpkStopModel(
-                        timetable_id=stop_data['timetable_id'],
-                        stop_street=stop_data['stop_street'],
-                        stop_number=stop_data['stop_number'],
-                        service_line_id=mpk_line,
-                        direction=stop_data['direction']
-                    )
+                        obj = MpkStopModel(
+                            timetable_id=stop_data['timetable_id'],
+                            stop_street=stop_data['stop_street'],
+                            stop_number=stop_data['stop_number'],
+                            service_line_id=mpk_line,
+                            direction=stop_data['direction']
+                        )
 
-                    session.add(obj)
-                    session.commit()
-                    if int(stop_data['direction']) == 1:
-                        self._load_and_save_stop_timetable(html, stop_data)
+                        session.add(obj)
+                        session.commit()
+                        if int(stop_data['direction']) == 1:
+                            self._load_and_save_stop_timetable(html, stop_data)
+                    except Exception, e:
+                        logger.error('Error occurred %r', e)
 
         for conn_data in starting_stops:
             self._load_mpk_connection(html, conn_data)
@@ -156,7 +159,6 @@ class MpkLoader(object):
             stop_number=mpk_stop['stop_number'],
             service_line_id=mpk_stop['service_line_id']
         ).first()
-        session.commit()
         logger.debug('Found Stop: %r', stop_row)
         for day_type, entry in data.iteritems():
             row_from_db = session.query(MpkTimetables).filter_by(
@@ -165,7 +167,6 @@ class MpkLoader(object):
                 stop_id=stop_row.id,
                 day_type=day_type
             ).first()
-            session.commit()
 
             logger.debug('Row from db: %r', row_from_db)
             if row_from_db:

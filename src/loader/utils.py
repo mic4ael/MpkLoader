@@ -7,6 +7,7 @@ from .log import logger
 
 import requests
 import re
+import sys
 
 
 class HtmlDownloader(object):
@@ -19,7 +20,11 @@ class HtmlDownloader(object):
             'Accept-Language': LANG
         }
 
-        return cls.session.get(url, headers=headers)
+        config = {
+            'verbose': sys.stdout
+        }
+
+        return cls.session.get(url, timeout=5, headers=headers, config=config)
 
     @classmethod
     def download_html(cls, url):
